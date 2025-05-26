@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<html>
+	<link rel="stylesheet" href="styles.css">
+	<body>
+		<h1>Welcome to Arch Guide!</h1>
+		<p>Here a guide of Arch Linux!</p>
+		<p>Let's start!</p>
+		<h1>What is Xorg?</h1>
+		<p>Xorg is a app for opening /dev/random and /dev/random is writing screen bytes in /dev/fb0, like is a support for opening DE (Desktop Enviroment)/WM (Window Manager), GUI if you don't understand.</p>
+		<h1>What is Wayland?</h1>
+		<p>This too like Xorg but it's small other..</p>
+		<p>PLEASE NOT RUN WAYLAND ON NVIDIA (or you videocard is will burn) or with small chance your videocard is not will burn</p>
+		<p>Wayland DE's or WM's: Hyprland (my best wm on wayland), GNOME (it's a desktop enviroment), Sway (analog i3 but on wayland), Xfce (Wayland) (it's xfce but on wayland), Plasma (Wayland) (it's plasma but on wayland too)</p>
+		<h1>How to install Xorg?</h1>
+		<p>Okay install Xorg is easy :))), enter in tty:</p>
+		<code>sudo pacman -S xorg-server xorg-xinit</code>
+		<p>Or if you don't have sudo, login in root:</p>
+		<code>su</code>
+		<p>And enter command but without sudo</p>
+		<h1>What is SDDM?</h1>
+		<p>SDDM (Simple Desktop Display Manager) - It's a very good display manager, display manager is a app for select DE's/WM's and select user and enter password and login</p>
+		<h1>How to install SDDM?</h1>
+		<p>Enter in your tty: </p>
+		<code>pacman -S sddm</code>
+		<p>And after install enter this: </p>
+		<code>systemctl enable --now sddm</code>
+		<p>And done! You have installed SDDM!</p>
+		<h1>What is sudo?</h1>
+		<p>sudo (Root Do/Su Do) - Is a root do but without login in root, it's good app!</p>
+		<h1>How to install sudo?</h1>
+		<p>Enter in your tty: </p>
+		<code>pacman -S sudo</code>
+		<p>After install you need open /etc/sudoers</p>
+		<p>And in end file found this line where: </p>
+		<code># root	ALL=(ALL:ALL) ALL</code>
+		<p></p>
+		<code># %wheel	ALL=(ALL:ALL) ALL</code>
+		<p></p>
+		<code># %sudo	ALL=(ALL:ALL) ALL</code>
+		<p></p>
+		<code># ALL ALL=(ALL:ALL) ALL</code>
+		<p>Delete all '#' from lines</p>
+		<p>And you have working and installed sudo!</p>
+		<h1>What is XFCE?</h1>
+		<p>XFCE - It's a easy and simple desktop enviroment for newbie's of Linux</p>
+		<h1>How to install XFCE?</h1>
+		<p>Enter in tty this command: </p>
+		<code>sudo pacman -S xfce4</code>
+		<p>And you have installed XFCE!</code>
+		<h1>How to create user?</h1>
+		<p>Create user easy!</p>
+		<p>Enter this in your tty: </p>
+		<code>useradd -m -G users,wheel,audio,video,tty name_for_new_user</code>
+		<p>And you create a new user!</p>
+		<p></p>
+		<p>Info of page: </p>
+		<ul style="list-style-type:square">
+			<li>Creator: Luxidev</li>
+			<li>Telegram: @luxidev1</li>
+			<li>Telegram Channel: @luxishki</li>
+			<li>Release Date: 2025-05-26</li>
+			<li>Version: 0.1</li>
+		</ul>
+	</body>
+</html>
