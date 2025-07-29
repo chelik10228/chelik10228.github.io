@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hex Audio Player with File Upload</title>
+    <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@7"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            margin-right: 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #waveform {
+            margin-top: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls {
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .time-display {
+            font-family: monospace;
+            font-size: 14px;
+            color: #333;
+        }
+        .status {
+            margin-top: 10px;
+            font-style: italic;
+            color: #666;
+        }
+        .time-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+        }
+        .file-input-container {
+            margin-bottom: 15px;
+        }
+        .file-input-label {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #2196F3;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .file-input-label:hover {
+            background-color: #0b7dda;
+        }
+        #fileInput {
+            display: none;
+        }
+        .input-section {
+            margin-bottom: 20px;
+        }
+        .or-divider {
+            text-align: center;
+            margin: 10px 0;
+            font-weight: bold;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hex Audio Player</h1>
+        
+        <div class="input-section">
+            <div class="file-input-container">
+                <label for="fileInput" class="file-input-label">Choose Hex File</label>
+                <input type="file" id="fileInput" accept=".txt,.hex,.bin">
+                <span id="fileName">No file selected</span>
+            </div>
+            
+            <div class="or-divider">OR</div>
+            
+            <p>Paste your audio file's hex code below:</p>
+            <textarea id="hexInput" placeholder="Paste hex code here (e.g., 52494646... for WAV files)"></textarea>
+        </div>
+        
+        <div class="controls">
+            <button id="loadBtn">Load Audio</button>
+            <button id="playBtn" disabled>Play</button>
+            <button id="stopBtn" disabled>Stop</button>
+            <div class="time-display" id="currentTime">00:00:00:000</div>
+            <div class="time-display">/</div>
+            <div class="time-display" id="duration">00:00:00:000</div>
+        </div>
+        
+        <div id="waveform"></div>
+        <div id="status" class="status">Ready to load audio</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const hexInput = document.getElementById('hexInput');
+            const fileInput = document.getElementById('fileInput');
+            const fileNameEl = document.getElementById('fileName');
+            const loadBtn = document.getElementById('loadBtn');
+            const playBtn = document.getElementById('playBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const currentTimeEl = document.getElementById('currentTime');
+            const durationEl = document.getElementById('duration');
+            const statusEl = document.getElementById('status');
+            
+            let wavesurfer = null;
+            let audioBlob = null;
+            let updateTimeInterval = null;
+            
+            // Format time to HH:MM:SS:MS
+            function formatTime(seconds) {
+                const date = new Date(seconds * 1000);
+                const hours = date.getUTCHours().toString().padStart(2, '0');
+                const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+                const secs = date.getUTCSeconds().toString().padStart(2, '0');
+                const ms = Math.floor((seconds % 1) * 1000).toString().padStart(3, '0');
+                
+                return `${hours}:${minutes}:${secs}:${ms}`;
+            }
+            
+            // Update time display
+            function updateTimeDisplay() {
+                if (wavesurfer) {
+                    const currentTime = wavesurfer.getCurrentTime();
+                    const duration = wavesurfer.getDuration();
+                    
+                    currentTimeEl.textContent = formatTime(currentTime);
+                    durationEl.textContent = formatTime(duration);
+                }
+            }
+            
+            // Initialize WaveSurfer
+            function initWaveSurfer() {
+                if (wavesurfer) {
+                    wavesurfer.destroy();
+                    clearInterval(updateTimeInterval);
+                }
+                
+                wavesurfer = WaveSurfer.create({
+                    container: '#waveform',
+                    waveColor: '#4CAF50',
+                    progressColor: '#2E7D32',
+                    cursorColor: '#1B5E20',
+                    barWidth: 2,
+                    barRadius: 3,
+                    cursorWidth: 1,
+                    height: 100,
+                    barGap: 2,
+                    responsive: true
+                });
+                
+                wavesurfer.on('ready', function() {
+                    playBtn.disabled = false;
+                    stopBtn.disabled = false;
+                    statusEl.textContent = 'Audio loaded and ready to play';
+                    durationEl.textContent = formatTime(wavesurfer.getDuration());
+                    
+                    // Start updating time display
+                    updateTimeInterval = setInterval(updateTimeDisplay, 10);
+                });
+                
+                wavesurfer.on('play', function() {
+                    statusEl.textContent = 'Playing...';
+                });
+                
+                wavesurfer.on('pause', function() {
+                    statusEl.textContent = 'Paused';
+                });
+                
+                wavesurfer.on('finish', function() {
+                    statusEl.textContent = 'Playback finished';
+                });
+                
+                wavesurfer.on('seek', function() {
+                    updateTimeDisplay();
+                });
+                
+                wavesurfer.on('error', function(error) {
+                    statusEl.textContent = 'Error: ' + error;
+                    clearInterval(updateTimeInterval);
+                });
+            }
+            
+            // Convert hex string to ArrayBuffer
+            function hexToArrayBuffer(hex) {
+                // Remove any whitespace or non-hex characters
+                hex = hex.replace(/[^0-9A-Fa-f]/g, '');
+                
+                if (hex.length % 2 !== 0) {
+                    throw new Error('Hex string has odd length');
+                }
+                
+                const buffer = new ArrayBuffer(hex.length / 2);
+                const view = new Uint8Array(buffer);
+                
+                for (let i = 0; i < hex.length; i += 2) {
+                    view[i / 2] = parseInt(hex.substr(i, 2), 16);
+                }
+                
+                return buffer;
+            }
+            
+            // Handle file selection
+            fileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                fileNameEl.textContent = file.name;
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    hexInput.value = e.target.result;
+                    statusEl.textContent = `File "${file.name}" loaded. Click "Load Audio" to process.`;
+                };
+                reader.onerror = function() {
+                    statusEl.textContent = 'Error reading file';
+                };
+                reader.readAsText(file);
+            });
+            
+            // Load audio from hex
+            loadBtn.addEventListener('click', function() {
+                const hex = hexInput.value.trim();
+                
+                if (!hex) {
+                    statusEl.textContent = 'Please enter hex code or select a file';
+                    return;
+                }
+                
+                try {
+                    statusEl.textContent = 'Processing hex code...';
+                    
+                    // Convert hex to ArrayBuffer
+                    const arrayBuffer = hexToArrayBuffer(hex);
+                    
+                    // Create Blob (assuming it's a WAV file - adjust if needed)
+                    audioBlob = new Blob([arrayBuffer], { type: 'audio/wav' });
+                    
+                    // Initialize WaveSurfer and load the audio
+                    initWaveSurfer();
+                    wavesurfer.loadBlob(audioBlob);
+                    
+                    statusEl.textContent = 'Loading audio...';
+                } catch (error) {
+                    statusEl.textContent = 'Error: ' + error.message;
+                    console.error(error);
+                }
+            });
+            
+            // Play button
+            playBtn.addEventListener('click', function() {
+                if (wavesurfer) {
+                    wavesurfer.play();
+                }
+            });
+            
+            // Stop button
+            stopBtn.addEventListener('click', function() {
+                if (wavesurfer) {
+                    wavesurfer.stop();
+                    statusEl.textContent = 'Playback stopped';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
